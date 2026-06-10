@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from 'macros.html' import book_form %}
+
+{% block title %}Добавить книгу{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4">Добавление новой книги</h2>
+
+        <form method="post" action="{{ url_for('books.add_book') }}" enctype="multipart/form-data"> 
+            {{ book_form(genres=genres) }}
+            <div class="mb-4">
+                <label for="cover_img" class="form-label">Обложка книги <span class="text-danger">*</span></label>
+                <input class="form-control" type="file" id="cover_img" name="cover_img" accept="image/*" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        new EasyMDE({ element: document.getElementById('short_description') });
+    });
+</script>
+{% endblock %}

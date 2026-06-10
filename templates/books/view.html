@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        {% if book.cover %}
+        <img src="{{ url_for('static', filename='covers/' ~ book.cover.file_name) }}" class="img-fluid rounded shadow"
+            alt="Обложка книги">
+        {% else %}
+        <div class="bg-secondary text-white d-flex justify-content-center align-items-center rounded shadow"
+            style="height: 400px;">
+            <span>Нет обложки</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-8">
+        <h2>{{ book.title }}</h2>
+        <h5 class="text-muted mb-4">{{ book.author }}, {{ book.year }} г.</h5>
+
+        <table class="table table-borderless mb-4">
+            <tbody>
+                <tr>
+                    <th scope="row" style="width: 30%;">Жанры:</th>
+                    <td>
+                        {% for genre in book.genres %}
+                        <span class="badge bg-secondary">{{ genre.name }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Издательство:</th>
+                    <td>{{ book.publisher }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Объём:</th>
+                    <td>{{ book.pages }} страниц</td>
+                </tr>
+                <tr>
+                    <th scope="row">Средняя оценка:</th>
+                    <td>
+                        <span class="badge bg-light text-dark fs-6">{{ book.average_rating }}</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4 class="mt-4">Описание</h4>
+        <div class="bg-light p-3 rounded border">
+            {{ description_html | safe }}
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<h3 class="mb-4">Рецензии пользователей</h3>
+{% set ns = namespace(has_others=false) %}
+
+{% for review in book.reviews %}
+{% if not current_user.is_authenticated or review.user_id != current_user.id %}
+{% set ns.has_others = true %}
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">
+            {{ review.user.last_name }} {{ review.user.first_name }}
+            <span class="badge bg-primary float-end">Оценка: {{ review.rating }}</span>
+        </h5>
+        <h6 class="card-subtitle mb-3 text-muted">{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</h6>
+
+        <div class="card-text bg-light p-3 rounded">
+            {{ review.text | markdown | safe }}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if not ns.has_others %}
+<div class="alert alert-light border text-center py-4 text-muted">
+    <p class="mb-0">Пользователи пока не оставили отзывов на эту книгу.</p>
+</div>
+{% endif %}
+
+
+
+
+{% if current_user.is_authenticated and current_user.role.name in ['Пользователь', 'Модератор', 'Администратор'] %}
+{% if user_review %}
+<div class="mt-5 p-4 bg-light rounded border">
+    <h4 class="mb-3">Моя рецензия</h4>
+    <div class="card border-secondary shadow-sm">
+        <div class="card-header bg-light text-dark">
+            {{ user_review.created_at.strftime('%d.%m.%Y %H:%M') }}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">
+                {{ user_review.last_name }} {{ user_review.first_name }}
+                <span class="badge bg-primary float-end">Оценка: {{ user_review.rating }}</span>
+            </h5>
+            <div class="card-text mt-3">
+                {{ user_review.text | markdown | safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<a href="{{ url_for('reviews.add_review', id=book.id) }}" class="btn btn-success btn-lg">Написать рецензию</a>
+{% endif %}
+{% elif not current_user.is_authenticated %}
+<div class="alert alert-warning mb-0">Пожалуйста, <a href="{{ url_for('auth.login') }}">войдите в систему</a>, чтобы
+    оставить рецензию.</div>
+{% endif %}
+
+{% endblock %}
